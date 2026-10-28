@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solco</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--cocoa:#1c0f09;--gold:#e7bd6e;--gold2:#b07a35;--pist:#b9cf9a;--rose:#f4c2cf;--ink:#fff6ea;--mut:rgba(255,246,234,.62)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--cocoa);color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif;overflow:hidden}
+body::before{content:"";position:fixed;inset:-15%;z-index:-1;background:
+ radial-gradient(38% 38% at 18% 22%,rgba(231,189,110,.55),transparent 70%),
+ radial-gradient(34% 34% at 84% 26%,rgba(244,194,207,.38),transparent 70%),
+ radial-gradient(44% 44% at 70% 92%,rgba(185,207,154,.38),transparent 70%),
+ radial-gradient(70% 70% at 50% 40%,#4a2a1c,#1c0f09 75%);
+ filter:blur(14px);animation:drift 28s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(4%,-3%) scale(1.06) rotate(2deg)}}
+.glass{background:linear-gradient(150deg,rgba(255,248,236,.24),rgba(255,248,236,.05) 55%,rgba(255,248,236,.12));
+ -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+ border:1px solid rgba(255,255,255,.28);border-radius:30px;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.25),0 30px 80px rgba(0,0,0,.45)}
+.app{display:grid;grid-template-columns:390px 1fr;gap:20px;height:100%;padding:max(20px,env(safe-area-inset-top)) 20px 20px}
+.side{padding:26px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.logo{font-family:"Playfair Display",Georgia,serif;font-weight:800;font-size:52px;line-height:1;letter-spacing:.01em;background:linear-gradient(120deg,#fff3d6,var(--gold) 45%,var(--rose));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{margin:6px 0 0;color:var(--mut);font-size:14px}
+.drop{display:flex;align-items:center;gap:14px;padding:18px;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.drop:hover,.drop.over{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 20px 50px rgba(231,189,110,.25)}
+.dropIcon{width:52px;height:52px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:24px;color:#2a1408;background:radial-gradient(circle at 30% 30%,#fff3d6,var(--gold) 60%,var(--gold2))}
+.drop b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px}
+.drop small{color:var(--mut);font-size:12px}
+#wave{width:100%;height:84px;border-radius:22px;display:block}
+.sec-t{font-family:"Playfair Display",Georgia,serif;font-size:20px;color:var(--gold);margin-top:4px}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.lab{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+.lab b{color:var(--ink);font-weight:600}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--gold2),var(--gold),var(--rose));outline:none;margin:6px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,var(--gold));box-shadow:0 0 0 4px rgba(231,189,110,.25),0 4px 12px rgba(0,0,0,.4);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,var(--gold))}
+.field,select.pill{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.12);color:var(--ink);border:1px solid rgba(255,255,255,.28);border-radius:14px;padding:11px 13px;font:inherit;font-size:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);width:100%;outline:none;cursor:pointer}
+select.pill{width:auto;border-radius:99px;padding:8px 14px;font-size:13px;margin-top:6px}
+select option{background:#2a1710;color:#fff6ea}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;border:0;cursor:pointer;border-radius:18px;padding:14px;transition:transform .15s,filter .2s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.ghost{background:rgba(255,255,255,.12);color:var(--ink);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(12px);font-weight:600}
+.cta{background:linear-gradient(135deg,#f3d18a,var(--gold) 40%,var(--gold2));color:#2a1408;font-weight:700;font-size:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 12px 32px rgba(231,189,110,.35)}
+.cta.alt{background:linear-gradient(135deg,#d9e7bd,var(--pist) 40%,#7d9a63);color:#16200e;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 12px 32px rgba(185,207,154,.3)}
+.warn{margin:0;font-size:12.5px;color:var(--rose);line-height:1.45;min-height:18px}
+.status{margin:0;font-size:13px;color:var(--mut);line-height:1.45;min-height:36px}
+.stage{position:relative;overflow:hidden}
+#view{position:absolute;inset:0}
+#view canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+.hint{position:absolute;top:22px;left:50%;transform:translateX(-50%);padding:9px 18px;font-size:13px;color:var(--mut);border-radius:99px;white-space:nowrap;pointer-events:none}
+.stats{position:absolute;left:16px;right:16px;bottom:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;padding:14px 18px}
+.stats small{display:block;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.stats b{font-size:17px;font-weight:600}
+.note{margin:0;font-size:12px;color:var(--mut);line-height:1.4}
+.brand{margin-top:auto;padding-top:14px;display:flex;align-items:center;gap:12px;color:var(--mut);font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid rgba(255,255,255,.12)}
+.brand img{width:44px;height:44px;filter:invert(1) opacity(.85)}
+@media(max-width:860px){html,body{overflow:auto}.app{grid-template-columns:1fr;height:auto}.stage{height:70vh;min-height:440px}.side{overflow:visible}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="glass side">
+    <header class="top">
+      <div>
+        <div class="logo">Solco</div>
+        <p class="tag" data-i18n="tag"></p>
+      </div>
+      <select id="lang" class="pill" aria-label="Language">
+        <option value="it">Italiano</option>
+        <option value="en">English</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </header>
+
+    <label id="drop" class="glass drop">
+      <input id="file" type="file" accept="audio/*" hidden>
+      <div class="dropIcon">♪</div>
+      <div><b id="fname"></b><small id="fmeta"></small></div>
+    </label>
+
+    <canvas id="wave" class="glass"></canvas>
+
+    <div class="sec-t" data-i18n="sec_bed"></div>
+    <div class="ctl">
+      <div class="lab"><span data-i18n="bed_preset"></span></div>
+      <select id="bedPreset" class="field">
+        <optgroup data-i18n="grp_generic" label="Generici">
+          <option value="180,180">180 × 180 mm</option>
+          <option value="256,256" selected>256 × 256 mm</option>
+          <option value="320,320">320 × 320 mm</option>
+        </optgroup>
+        <optgroup label="Bambu Lab">
+          <option value="180,180">A1 mini · 180 × 180 mm</option>
+          <option value="256,256">A1 · 256 × 256 mm</option>
+          <option value="330,320">A2L · 330 × 320 mm</option>
+          <option value="256,256">P1P · 256 × 256 mm</option>
+          <option value="256,256">P1S · 256 × 256 mm</option>
+          <option value="256,256">P2S · 256 × 256 mm</option>
+          <option value="256,256">X1C · 256 × 256 mm</option>
+          <option value="256,256">X2D · 256 × 256 mm</option>
+          <option value="340,320">H2S · 340 × 320 mm</option>
+          <option value="325,320">H2D · 325 × 320 mm</option>
+          <option value="305,320">H2C · 305 × 320 mm</option>
+        </optgroup>
+        <optgroup label="AnyCubic">
+          <option value="260,260">Kobra X · 260 × 260 mm</option>
+        </optgroup>
+        <option value="custom" data-i18n="bed_custom"></option>
+      </select>
+      <p class="note" data-i18n="bed_note"></p>
+    </div>
+    <div id="customBed" class="grid2" hidden>
+      <div class="ctl"><div class="lab"><span data-i18n="bed_x"></span></div><input id="bedX" class="field" type="number" min="50" max="600" step="1" value="256"></div>
+      <div class="ctl"><div class="lab"><span data-i18n="bed_y"></span></div><input id="bedY" class="field" type="number" min="50" max="600" step="1" value="256"></div>
+    </div>
+    <div class="ctl">
+      <div class="lab"><span data-i18n="bed_margin"></span><b id="o_margin"></b></div>
+      <input type="range" id="margin" min="0" max="30" step="1" value="10">
+    </div>
+
+    <div class="sec-t" data-i18n="sec_disc"></div>
+    <section id="controls" style="display:flex;flex-direction:column;gap:14px"></section>
+
+    <div class="row">
+      <button id="btnPlay" class="ghost" disabled data-i18n="btn_play"></button>
+      <button id="btnAdapt" class="ghost" disabled data-i18n="btn_adapt"></button>
+    </div>
+    <button id="btnGen" class="cta" disabled data-i18n="btn_gen"></button>
+    <button id="btnStl" class="cta alt" disabled data-i18n="btn_stl"></button>
+
+    <p id="warn" class="warn"></p>
+    <p id="status" class="status"></p>
+    <div class="brand">
+      <img src="logo_everythink.svg" alt="everythink">
+      <span>everythink</span>
+    </div>
+  </aside>
+
+  <main class="glass stage">
+    <div id="view"></div>
+    <div class="glass hint" id="hint" data-i18n="hint"></div>
+    <div class="glass stats" id="stats"></div>
+  </main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+/* ---------- traduzioni ---------- */
+const DICT = {
+it: {
+  grp_generic:"Generici", bed_note:"Volumi dichiarati dal costruttore, ugello singolo. Per H2C si usa il valore più cautelativo.",
+  title:"Solco — Audio → Vinile 3D", tag:"Trasforma un suono in un solco da stampare",
+  drop_title:"Trascina un file audio", drop_fmt:"MP3 · WAV · FLAC · OGG · M4A",
+  sec_bed:"Piatto di stampa", bed_preset:"Dimensione piatto", bed_custom:"Personalizzato",
+  bed_x:"X (mm)", bed_y:"Y (mm)", bed_margin:"Margine di sicurezza",
+  sec_disc:"Disco",
+  lbl_dia:"Diametro disco", lbl_pitch:"Passo solco", lbl_depth:"Profondità solco", lbl_rpm:"Velocità di lettura", lbl_res:"Risoluzione angolare",
+  u_mm:"mm", u_rpm:"giri/min", u_pts:"punti/giro",
+  btn_play:"Ascolta", btn_stop:"Ferma", btn_adapt:"Adatta durata", btn_gen:"Genera modello", btn_stl:"Scarica STL",
+  hint:"Carica un audio, poi genera il disco · trascina per ruotare, rotella per zoom",
+  st_needaudio:"Carica un file audio per iniziare.", st_decoding:"Decodifico l'audio…",
+  st_badfmt:"Formato non supportato dal browser: prova MP3 o WAV.",
+  st_loaded:"Audio caricato. Imposta i parametri e genera il modello.",
+  st_changed:"Parametri cambiati: rigenera il modello.",
+  st_adapt:"Velocità impostata a {0} giri/min: il solco contiene tutto l'audio, ma la banda scende.",
+  st_signal:"Calcolo il segnale del solco…", st_surface:"Costruisco la superficie (qualche secondo)…",
+  st_preview:"Preparo l'anteprima 3D…", st_ready:"Modello pronto · {0}k triangoli. Ruotalo e scaricalo in STL.",
+  st_err:"Errore durante la generazione: {0}", st_nothree:"Impossibile caricare Three.js: controlla la connessione.",
+  warn_trunc:"L'audio dura {0}, il solco ne contiene {1}: verrà troncato. Usa «Adatta durata» oppure aumenta diametro o passo.",
+  warn_heavy:"Modello molto pesante: aumenta il passo o riduci diametro e risoluzione.",
+  warn_scale:"Diametro ridotto a {0} mm per rientrare nel piatto con margine di {1} mm (scala {2}×).",
+  warn_small:"Il piatto è troppo piccolo per il margine scelto.",
+  stat_dur:"Durata massima", stat_fs:"Campionamento", stat_band:"Banda utile", stat_tris:"Triangoli", stat_size:"File STL",
+  fmt_s:"{0} s", fmt_ms:"{0} min {1} s", mono:"mono", stereo:"stereo → mono", fmeta:"{0} · {1} Hz · {2}"
+},
+en: {
+  grp_generic:"Generic", bed_note:"Manufacturer volumes, single nozzle. H2C uses the more conservative value.",
+  title:"Solco — Audio → 3D Vinyl", tag:"Turn a sound into a groove you can print",
+  drop_title:"Drop an audio file", drop_fmt:"MP3 · WAV · FLAC · OGG · M4A",
+  sec_bed:"Print bed", bed_preset:"Bed size", bed_custom:"Custom",
+  bed_x:"X (mm)", bed_y:"Y (mm)", bed_margin:"Safety margin",
+  sec_disc:"Disc",
+  lbl_dia:"Disc diameter", lbl_pitch:"Groove pitch", lbl_depth:"Groove depth", lbl_rpm:"Playback speed", lbl_res:"Angular resolution",
+  u_mm:"mm", u_rpm:"rpm", u_pts:"points/turn",
+  btn_play:"Listen", btn_stop:"Stop", btn_adapt:"Fit duration", btn_gen:"Generate model", btn_stl:"Download STL",
+  hint:"Load audio, then generate the disc · drag to rotate, scroll to zoom",
+  st_needaudio:"Load an audio file to start.", st_decoding:"Decoding audio…",
+  st_badfmt:"Format not supported by this browser: try MP3 or WAV.",
+  st_loaded:"Audio loaded. Set the parameters and generate the model.",
+  st_changed:"Parameters changed: regenerate the model.",
+  st_adapt:"Speed set to {0} rpm: the groove now holds the whole track, but bandwidth drops.",
+  st_signal:"Computing the groove signal…", st_surface:"Building the surface (a few seconds)…",
+  st_preview:"Preparing the 3D preview…", st_ready:"Model ready · {0}k triangles. Rotate it and download the STL.",
+  st_err:"Error during generation: {0}", st_nothree:"Could not load Three.js: check your connection.",
+  warn_trunc:"The audio lasts {0} but the groove holds {1}: it will be cut. Use “Fit duration” or increase diameter or pitch.",
+  warn_heavy:"Very heavy model: increase pitch or reduce diameter and resolution.",
+  warn_scale:"Diameter reduced to {0} mm to fit the bed with a {1} mm margin (scale {2}×).",
+  warn_small:"The bed is too small for this margin.",
+  stat_dur:"Max duration", stat_fs:"Sampling", stat_band:"Usable bandwidth", stat_tris:"Triangles", stat_size:"STL file",
+  fmt_s:"{0} s", fmt_ms:"{0} min {1} s", mono:"mono", stereo:"stereo → mono", fmeta:"{0} · {1} Hz · {2}"
+},
+fr: {
+  grp_generic:"Génériques", bed_note:"Volumes annoncés par le constructeur, buse unique. Pour le H2C, la valeur la plus prudente est utilisée.",
+  title:"Solco — Audio → Vinyle 3D", tag:"Transforme un son en sillon à imprimer",
+  drop_title:"Dépose un fichier audio", drop_fmt:"MP3 · WAV · FLAC · OGG · M4A",
+  sec_bed:"Plateau d'impression", bed_preset:"Taille du plateau", bed_custom:"Personnalisé",
+  bed_x:"X (mm)", bed_y:"Y (mm)", bed_margin:"Marge de sécurité",
+  sec_disc:"Disque",
+  lbl_dia:"Diamètre du disque", lbl_pitch:"Pas du sillon", lbl_depth:"Profondeur du sillon", lbl_rpm:"Vitesse de lecture", lbl_res:"Résolution angulaire",
+  u_mm:"mm", u_rpm:"tr/min", u_pts:"points/tour",
+  btn_play:"Écouter", btn_stop:"Arrêter", btn_adapt:"Adapter la durée", btn_gen:"Générer le modèle", btn_stl:"Télécharger le STL",
+  hint:"Charge un audio, puis génère le disque · glisse pour tourner, molette pour zoomer",
+  st_needaudio:"Charge un fichier audio pour commencer.", st_decoding:"Décodage de l'audio…",
+  st_badfmt:"Format non pris en charge par le navigateur : essaie MP3 ou WAV.",
+  st_loaded:"Audio chargé. Règle les paramètres et génère le modèle.",
+  st_changed:"Paramètres modifiés : régénère le modèle.",
+  st_adapt:"Vitesse réglée à {0} tr/min : le sillon contient toute la piste, mais la bande passante baisse.",
+  st_signal:"Calcul du signal du sillon…", st_surface:"Construction de la surface (quelques secondes)…",
+  st_preview:"Préparation de l'aperçu 3D…", st_ready:"Modèle prêt · {0}k triangles. Fais-le tourner et télécharge le STL.",
+  st_err:"Erreur pendant la génération : {0}", st_nothree:"Impossible de charger Three.js : vérifie ta connexion.",
+  warn_trunc:"L'audio dure {0}, le sillon en contient {1} : il sera coupé. Utilise « Adapter la durée » ou augmente le diamètre ou le pas.",
+  warn_heavy:"Modèle très lourd : augmente le pas ou réduis le diamètre et la résolution.",
+  warn_scale:"Diamètre réduit à {0} mm pour tenir sur le plateau avec une marge de {1} mm (échelle {2}×).",
+  warn_small:"Le plateau est trop petit pour cette marge.",
+  stat_dur:"Durée max", stat_fs:"Échantillonnage", stat_band:"Bande utile", stat_tris:"Triangles", stat_size:"Fichier STL",
+  fmt_s:"{0} s", fmt_ms:"{0} min {1} s", mono:"mono", stereo:"stéréo → mono", fmeta:"{0} · {1} Hz · {2}"
+},
+es: {
+  grp_generic:"Genéricas", bed_note:"Volúmenes del fabricante, boquilla única. Para el H2C se usa el valor más conservador.",
+  title:"Solco — Audio → Vinilo 3D", tag:"Convierte un sonido en un surco para imprimir",
+  drop_title:"Arrastra un archivo de audio", drop_fmt:"MP3 · WAV · FLAC · OGG · M4A",
+  sec_bed:"Cama de impresión", bed_preset:"Tamaño de la cama", bed_custom:"Personalizado",
+  bed_x:"X (mm)", bed_y:"Y (mm)", bed_margin:"Margen de seguridad",
+  sec_disc:"Disco",
+  lbl_dia:"Diámetro del disco", lbl_pitch:"Paso del surco", lbl_depth:"Profundidad del surco", lbl_rpm:"Velocidad de reproducción", lbl_res:"Resolución angular",
+  u_mm:"mm", u_rpm:"rpm", u_pts:"puntos/vuelta",
+  btn_play:"Escuchar", btn_stop:"Parar", btn_adapt:"Ajustar duración", btn_gen:"Generar modelo", btn_stl:"Descargar STL",
+  hint:"Carga un audio y genera el disco · arrastra para girar, rueda para hacer zoom",
+  st_needaudio:"Carga un archivo de audio para empezar.", st_decoding:"Decodificando el audio…",
+  st_badfmt:"Formato no compatible con este navegador: prueba con MP3 o WAV.",
+  st_loaded:"Audio cargado. Ajusta los parámetros y genera el modelo.",
+  st_changed:"Parámetros cambiados: vuelve a generar el modelo.",
+  st_adapt:"Velocidad fijada en {0} rpm: el surco contiene toda la pista, pero baja el ancho de banda.",
+  st_signal:"Calculando la señal del surco…", st_surface:"Construyendo la superficie (unos segundos)…",
+  st_preview:"Preparando la vista 3D…", st_ready:"Modelo listo · {0}k triángulos. Gíralo y descarga el STL.",
+  st_err:"Error durante la generación: {0}", st_nothree:"No se pudo cargar Three.js: revisa la conexión.",
+  warn_trunc:"El audio dura {0} pero el surco contiene {1}: se recortará. Usa «Ajustar duración» o aumenta diámetro o paso.",
+  warn_heavy:"Modelo muy pesado: aumenta el paso o reduce diámetro y resolución.",
+  warn_scale:"Diámetro reducido a {0} mm para caber en la cama con un margen de {1} mm (escala {2}×).",
+  warn_small:"La cama es demasiado pequeña para este margen.",
+  stat_dur:"Duración máx.", stat_fs:"Muestreo", stat_band:"Ancho de banda útil", stat_tris:"Triángulos", stat_size:"Archivo STL",
+  fmt_s:"{0} s", fmt_ms:"{0} min {1} s", mono:"mono", stereo:"estéreo → mono", fmeta:"{0} · {1} Hz · {2}"
+},
+de: {
+  grp_generic:"Allgemein", bed_note:"Herstellerangaben, einzelne Düse. Beim H2C wird der konservativere Wert verwendet.",
+  title:"Solco — Audio → 3D-Vinyl", tag:"Verwandle einen Klang in eine Rille zum Drucken",
+  drop_title:"Audiodatei hierher ziehen", drop_fmt:"MP3 · WAV · FLAC · OGG · M4A",
+  sec_bed:"Druckbett", bed_preset:"Größe des Druckbetts", bed_custom:"Benutzerdefiniert",
+  bed_x:"X (mm)", bed_y:"Y (mm)", bed_margin:"Sicherheitsabstand",
+  sec_disc:"Scheibe",
+  lbl_dia:"Scheibendurchmesser", lbl_pitch:"Rillenabstand", lbl_depth:"Rillentiefe", lbl_rpm:"Abspielgeschwindigkeit", lbl_res:"Winkelauflösung",
+  u_mm:"mm", u_rpm:"U/min", u_pts:"Punkte/Umdrehung",
+  btn_play:"Anhören", btn_stop:"Stopp", btn_adapt:"Dauer anpassen", btn_gen:"Modell erzeugen", btn_stl:"STL herunterladen",
+  hint:"Audio laden, dann Scheibe erzeugen · ziehen zum Drehen, Mausrad zum Zoomen",
+  st_needaudio:"Lade eine Audiodatei, um zu beginnen.", st_decoding:"Audio wird dekodiert…",
+  st_badfmt:"Format vom Browser nicht unterstützt: versuche MP3 oder WAV.",
+  st_loaded:"Audio geladen. Parameter einstellen und Modell erzeugen.",
+  st_changed:"Parameter geändert: Modell neu erzeugen.",
+  st_adapt:"Geschwindigkeit auf {0} U/min gesetzt: die Rille enthält nun das ganze Stück, aber die Bandbreite sinkt.",
+  st_signal:"Rillensignal wird berechnet…", st_surface:"Oberfläche wird aufgebaut (einige Sekunden)…",
+  st_preview:"3D-Vorschau wird vorbereitet…", st_ready:"Modell fertig · {0}k Dreiecke. Drehen und STL herunterladen.",
+  st_err:"Fehler bei der Erzeugung: {0}", st_nothree:"Three.js konnte nicht geladen werden: Verbindung prüfen.",
+  warn_trunc:"Das Audio dauert {0}, die Rille fasst {1}: es wird gekürzt. Nutze „Dauer anpassen“ oder vergrößere Durchmesser oder Abstand.",
+  warn_heavy:"Modell sehr groß: Rillenabstand erhöhen oder Durchmesser und Auflösung verringern.",
+  warn_scale:"Durchmesser auf {0} mm reduziert, damit die Scheibe mit {1} mm Abstand aufs Bett passt (Skalierung {2}×).",
+  warn_small:"Das Druckbett ist für diesen Abstand zu klein.",
+  stat_dur:"Max. Dauer", stat_fs:"Abtastrate", stat_band:"Nutzbandbreite", stat_tris:"Dreiecke", stat_size:"STL-Datei",
+  fmt_s:"{0} s", fmt_ms:"{0} min {1} s", mono:"Mono", stereo:"Stereo → Mono", fmeta:"{0} · {1} Hz · {2}"
+}
+};
+const LANGS = ['it','en','fr','es','de'];
+let LANG = LANGS.find(l => (navigator.language || '').toLowerCase().startsWith(l)) || 'it';
+const L = (key, ...args) => {
+  let s = (DICT[LANG][key] ?? DICT.en[key] ?? key);
+  args.forEach((v, i) => s = s.replace('{' + i + '}', v));
+  return s;
+};
+
+/* ---------- stato ---------- */
+const CFG = {
+  dia:   {l:'lbl_dia',   u:'u_mm',  min:80,  max:300,  st:1,    v:120},
+  pitch: {l:'lbl_pitch', u:'u_mm',  min:0.8, max:3,    st:0.05, v:1.5},
+  depth: {l:'lbl_depth', u:'u_mm',  min:0.2, max:1.2,  st:0.05, v:0.6},
+  rpm:   {l:'lbl_rpm',   u:'u_rpm', min:8,   max:80,   st:0.1,  v:33.3},
+  res:   {l:'lbl_res',   u:'u_pts', min:512, max:2048, st:64,   v:1280}
+};
+const V = {};
+for (const k in CFG) V[k] = CFG[k].v;
+const B = { x: 256, y: 256, m: 10 };   // piatto e margine (mm)
+
+let A = null, POS = null, PLAY = null, R3, SC, CAM, GRP, MAT, MESH = null, BED = null, drag = null;
+let statusKey = 'st_needaudio', statusArgs = [];
+
+const fmt = s => s < 60 ? L('fmt_s', s.toFixed(0)) : L('fmt_ms', Math.floor(s / 60), Math.round(s % 60));
+const tick = () => new Promise(r => setTimeout(r, 30));
+function setStatus(key, ...args) { statusKey = key; statusArgs = args; renderStatus(); }
+function renderStatus() { $('#status').textContent = statusKey ? L(statusKey, ...statusArgs) : ''; }
+
+/* ---------- controlli ---------- */
+const box = $('#controls');
+for (const k in CFG) {
+  const c = CFG[k];
+  const row = document.createElement('div');
+  row.className = 'ctl';
+  row.innerHTML = `<div class="lab"><span data-i18n="${c.l}"></span><b id="o_${k}"></b></div>
+    <input type="range" id="s_${k}" min="${c.min}" max="${c.max}" step="${c.st}" value="${c.v}">`;
+  box.appendChild(row);
+  row.querySelector('input').oninput = e => { V[k] = +e.target.value; invalidate(); refresh(); };
+}
+
+function fmtVal(k) {
+  const u = L(CFG[k].u);
+  const n = k === 'rpm' ? V.rpm.toFixed(1) : k === 'res' ? Math.round(V.res) :
+            (k === 'pitch' || k === 'depth') ? V[k].toFixed(2) : V[k];
+  return n + ' ' + u;
+}
+
+/* scala: il modello si riduce solo se non entra nel piatto con il margine */
+function avail() { return Math.max(5, Math.min(B.x, B.y) - 2 * B.m); }
+function scale() { return Math.min(1, avail() / V.dia); }
+
+/* geometria derivata: tutte le misure lineari seguono la scala */
+function G() {
+  const s = scale();
+  const Rout = V.dia * s / 2, Rin = 3.6 * s, Rs = Rout - 3 * s, Re = Rin + 3 * s, p = V.pitch * s;
+  const turns = Math.max(1, (Rs - Re) / p);
+  const Ns = Math.round(V.res);
+  const Nr = Math.ceil((Rout - Rin) / (p / 10)) + 1;
+  return { s, Rout, Rin, Rs, p, D: V.depth * s, T: 3 * s, turns, Ns, Nr,
+           dur: turns * 60 / V.rpm, fs: Ns * V.rpm / 60,
+           tris: 2 * (Nr - 1) * Ns + 6 * Ns };
+}
+
+function refresh() {
+  for (const k in CFG) $('#o_' + k).textContent = fmtVal(k);
+  $('#o_margin').textContent = B.m + ' ' + L('u_mm');
+  const g = G();
+  const mb = (84 + 50 * g.tris) / 1e6;
+  $('#stats').innerHTML = [
+    [L('stat_dur'), fmt(g.dur)],
+    [L('stat_fs'), g.fs.toFixed(0) + ' Hz'],
+    [L('stat_band'), (g.fs / 2).toFixed(0) + ' Hz'],
+    [L('stat_tris'), (g.tris / 1000).toFixed(0) + 'k'],
+    [L('stat_size'), mb.toFixed(1) + ' MB']
+  ].map(([a, b]) => `<div><small>${a}</small><b>${b}</b></div>`).join('');
+
+  const w = [];
+  if (g.s < 1) w.push(L('warn_scale', Math.round(V.dia * g.s), B.m, g.s.toFixed(2)));
+  if (avail() <= 10) w.push(L('warn_small'));
+  if (A && A.dur > g.dur + 0.5) w.push(L('warn_trunc', fmt(A.dur), fmt(g.dur)));
+  if (g.tris > 2.5e6) w.push(L('warn_heavy'));
+  $('#warn').textContent = w.join(' ');
+}
+
+function invalidate() {
+  POS = null;
+  $('#btnStl').disabled = true;
+  if (A) setStatus('st_changed');
+}
+
+/* ---------- piatto di stampa ---------- */
+function onBedChange() {
+  invalidate();
+  drawBed();
+  fitCamera();
+  refresh();
+}
+
+$('#bedPreset').onchange = e => {
+  const v = e.target.value;
+  if (v === 'custom') {
+    $('#customBed').hidden = false;
+    B.x = +$('#bedX').value; B.y = +$('#bedY').value;
+  } else {
+    const [x, y] = v.split(',').map(Number);
+    $('#customBed').hidden = true;
+    B.x = x; B.y = y;
+    $('#bedX').value = x; $('#bedY').value = y;
+  }
+  onBedChange();
+};
+$('#bedX').oninput = e => { B.x = +e.target.value || 50; onBedChange(); };
+$('#bedY').oninput = e => { B.y = +e.target.value || 50; onBedChange(); };
+$('#margin').oninput = e => { B.m = +e.target.value; onBedChange(); };
+
+function drawBed() {
+  if (!window.THREE || !GRP) return;
+  if (BED) {
+    GRP.remove(BED);
+    BED.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  }
+  BED = new THREE.Group();
+  const plane = new THREE.PlaneGeometry(B.x, B.y);
+  const fill = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ color: 0xe7bd6e, transparent: true, opacity: 0.07, side: THREE.DoubleSide, depthWrite: false }));
+  fill.position.z = -0.3;
+  BED.add(fill);
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(plane),
+    new THREE.LineBasicMaterial({ color: 0xf4c2cf, transparent: true, opacity: 0.8 }));
+  edge.position.z = -0.3;
+  BED.add(edge);
+  const inner = new THREE.PlaneGeometry(Math.max(1, B.x - 2 * B.m), Math.max(1, B.y - 2 * B.m));
+  const ie = new THREE.LineSegments(new THREE.EdgesGeometry(inner),
+    new THREE.LineBasicMaterial({ color: 0xe7bd6e, transparent: true, opacity: 0.6 }));
+  ie.position.z = -0.25;
+  BED.add(ie);
+  GRP.add(BED);
+}
+
+function fitCamera() {
+  if (!CAM) return;
+  const d = Math.max(B.x, B.y) * 1.9;
+  CAM.position.set(0, -d * 0.7, d * 0.7);
+  CAM.lookAt(0, 0, 0);
+}
+
+/* ---------- caricamento audio ---------- */
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadAudio(f); });
+$('#file').onchange = e => { if (e.target.files[0]) loadAudio(e.target.files[0]); };
+
+function updateDrop() {
+  if (A) {
+    $('#fname').textContent = A.name;
+    $('#fmeta').textContent = L('fmeta', fmt(A.dur), A.fs, L(A.stereo ? 'stereo' : 'mono'));
+  } else {
+    $('#fname').textContent = L('drop_title');
+    $('#fmeta').textContent = L('drop_fmt');
+  }
+}
+
+async function loadAudio(file) {
+  setStatus('st_decoding');
+  try {
+    const ab = await file.arrayBuffer();
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = await ctx.decodeAudioData(ab);
+    const ch = buf.numberOfChannels, n = buf.length, mono = new Float32Array(n);
+    for (let c = 0; c < ch; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < n; i++) mono[i] += d[i] / ch;
+    }
+    A = { buf, ctx, data: mono, fs: buf.sampleRate, dur: buf.duration,
+          name: file.name.replace(/\.[^.]+$/, ''), stereo: ch > 1 };
+    ['btnPlay', 'btnAdapt', 'btnGen'].forEach(id => $('#' + id).disabled = false);
+    $('#hint').hidden = true;
+    updateDrop();
+    drawWave();
+    invalidate();
+    setStatus('st_loaded');
+    refresh();
+  } catch (e) {
+    setStatus('st_badfmt');
+  }
+}
+
+function drawWave() {
+  const c = $('#wave'), dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w * dpr; c.height = h * dpr;
+  const x = c.getContext('2d');
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.clearRect(0, 0, w, h);
+  if (!A) return;
+  const d = A.data, step = Math.max(1, Math.floor(d.length / w)), mid = h / 2;
+  x.beginPath();
+  for (let i = 0; i < w; i++) {
+    let mx = 0;
+    for (let k = 0; k < step; k++) { const v = Math.abs(d[i * step + k] || 0); if (v > mx) mx = v; }
+    x.moveTo(i + .5, mid - mx * (mid - 6));
+    x.lineTo(i + .5, mid + mx * (mid - 6));
+  }
+  const gr = x.createLinearGradient(0, 0, w, 0);
+  gr.addColorStop(0, '#e7bd6e'); gr.addColorStop(1, '#f4c2cf');
+  x.strokeStyle = gr; x.lineWidth = 1.2; x.stroke();
+}
+
+$('#btnPlay').onclick = () => {
+  if (!A) return;
+  if (PLAY) { PLAY.stop(); PLAY = null; $('#btnPlay').textContent = L('btn_play'); return; }
+  A.ctx.resume();
+  const s = A.ctx.createBufferSource();
+  s.buffer = A.buf; s.connect(A.ctx.destination);
+  s.onended = () => { PLAY = null; $('#btnPlay').textContent = L('btn_play'); };
+  s.start(); PLAY = s; $('#btnPlay').textContent = L('btn_stop');
+};
+
+$('#btnAdapt').onclick = () => {
+  if (!A) return;
+  const g = G();
+  const r = Math.min(80, Math.max(8, g.turns * 60 / A.dur));
+  V.rpm = r; $('#s_rpm').value = r;
+  invalidate(); refresh();
+  setStatus('st_adapt', r.toFixed(1));
+};
+
+/* ---------- segnale -> solco ---------- */
+function signal(g) {
+  const N = Math.floor(g.turns * g.Ns), x = new Float32Array(N), src = A.data;
+  const step = A.fs * g.dur / N;
+  let pk = 0;
+  for (let k = 0; k < N; k++) {
+    const s0 = Math.floor(k * step), s1 = Math.max(s0 + 1, Math.floor((k + 1) * step));
+    let s = 0, c = 0;
+    for (let i = s0; i < s1 && i < src.length; i++) { s += src[i]; c++; }
+    x[k] = c ? s / c : 0;
+    if (Math.abs(x[k]) > pk) pk = Math.abs(x[k]);
+  }
+  if (pk > 0) for (let k = 0; k < N; k++) x[k] *= 0.95 / pk;
+  return x;
+}
+
+function depthAt(r, th, g, x) {
+  const TAU = 2 * Math.PI;
+  const mReal = (g.Rs - r) / g.p - th / TAU;
+  const m0 = Math.floor(mReal) - 1;
+  const Amp = 0.3 * g.p, hw = 0.3 * g.p;
+  let best = 0;
+  for (let m = m0; m <= m0 + 3; m++) {
+    const a = th + TAU * m;
+    if (a < 0 || a > TAU * g.turns) continue;
+    let k = Math.floor(a / TAU * g.Ns + 1e-9);
+    if (k >= x.length) k = x.length - 1;
+    const Rc = g.Rs - g.p * a / TAU + Amp * x[k];
+    const v = 1 - Math.abs(r - Rc) / hw;
+    if (v > best) best = v;
+  }
+  return best;
+}
+
+function buildMesh(g, x) {
+  const { Nr, Ns, Rin, Rout, D, T } = g;
+  const dr = (Rout - Rin) / (Nr - 1);
+  const NT = Nr * Ns;
+  const VV = new Float32Array(3 * (NT + 2 * Ns));
+
+  for (let i = 0; i < Nr; i++) {
+    const r = Rin + i * dr;
+    for (let j = 0; j < Ns; j++) {
+      const th = j * 2 * Math.PI / Ns, id = i * Ns + j;
+      VV[3 * id] = r * Math.cos(th);
+      VV[3 * id + 1] = r * Math.sin(th);
+      VV[3 * id + 2] = T - D * depthAt(r, th, g, x);
+    }
+  }
+  for (let j = 0; j < Ns; j++) {
+    const th = j * 2 * Math.PI / Ns, c = Math.cos(th), s = Math.sin(th);
+    let id = NT + j;      VV[3 * id] = Rin * c;  VV[3 * id + 1] = Rin * s;
+    id = NT + Ns + j;     VV[3 * id] = Rout * c; VV[3 * id + 1] = Rout * s;
+  }
+
+  const out = new Float32Array(g.tris * 9);
+  let q = 0;
+  const put = id => { out[q++] = VV[3 * id]; out[q++] = VV[3 * id + 1]; out[q++] = VV[3 * id + 2]; };
+  const tri = (a, b, c) => { put(a); put(b); put(c); };
+  const TI = (i, j) => i * Ns + (j % Ns);
+  const BI = j => NT + (j % Ns);
+  const BO = j => NT + Ns + (j % Ns);
+
+  for (let i = 0; i < Nr - 1; i++) for (let j = 0; j < Ns; j++) {
+    const p00 = TI(i, j), p10 = TI(i + 1, j), p11 = TI(i + 1, j + 1), p01 = TI(i, j + 1);
+    tri(p00, p10, p11); tri(p00, p11, p01);
+  }
+  for (let j = 0; j < Ns; j++) {
+    const p00 = BI(j), p10 = BO(j), p11 = BO(j + 1), p01 = BI(j + 1);
+    tri(p00, p11, p10); tri(p00, p01, p11);
+  }
+  for (let j = 0; j < Ns; j++) {
+    const a = TI(Nr - 1, j), b = TI(Nr - 1, j + 1);
+    tri(a, BO(j), BO(j + 1)); tri(a, BO(j + 1), b);
+  }
+  for (let j = 0; j < Ns; j++) {
+    const a = TI(0, j), b = TI(0, j + 1);
+    tri(a, BI(j + 1), BI(j)); tri(a, b, BI(j + 1));
+  }
+  return out;
+}
+
+async function generate() {
+  if (!A) return;
+  $('#btnGen').disabled = true;
+  try {
+    const g = G();
+    setStatus('st_signal'); await tick();
+    const x = signal(g);
+    setStatus('st_surface'); await tick();
+    POS = buildMesh(g, x);
+    setStatus('st_preview'); await tick();
+    showMesh(POS);
+    $('#btnStl').disabled = false;
+    setStatus('st_ready', Math.round(POS.length / 9 / 1000));
+  } catch (e) {
+    setStatus('st_err', e.message);
+  } finally {
+    $('#btnGen').disabled = false;
+  }
+}
+$('#btnGen').onclick = generate;
+
+/* ---------- export STL binario ---------- */
+function toSTL(pos) {
+  const n = pos.length / 9, buf = new ArrayBuffer(84 + 50 * n), dv = new DataView(buf);
+  const head = 'Solco - audio to vinyl';
+  for (let i = 0; i < head.length; i++) dv.setUint8(i, head.charCodeAt(i));
+  dv.setUint32(80, n, true);
+  let o = 84;
+  for (let t = 0; t < n; t++) {
+    const b = t * 9;
+    const ux = pos[b + 3] - pos[b], uy = pos[b + 4] - pos[b + 1], uz = pos[b + 5] - pos[b + 2];
+    const vx = pos[b + 6] - pos[b], vy = pos[b + 7] - pos[b + 1], vz = pos[b + 8] - pos[b + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz) || 1;
+    dv.setFloat32(o, nx / l, true); dv.setFloat32(o + 4, ny / l, true); dv.setFloat32(o + 8, nz / l, true);
+    o += 12;
+    for (let k = 0; k < 9; k++) { dv.setFloat32(o, pos[b + k], true); o += 4; }
+    o += 2;
+  }
+  return new Blob([buf], { type: 'application/sla' });
+}
+
+$('#btnStl').onclick = () => {
+  if (!POS) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(toSTL(POS));
+  a.download = (A ? A.name : 'solco') + '_vinyl.stl';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+/* ---------- anteprima 3D ---------- */
+function initView() {
+  if (!window.THREE) { setStatus('st_nothree'); return; }
+  const host = $('#view');
+  R3 = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  R3.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  host.appendChild(R3.domElement);
+  SC = new THREE.Scene();
+  CAM = new THREE.PerspectiveCamera(35, 1, 1, 4000);
+  CAM.up.set(0, 0, 1);
+  GRP = new THREE.Group();
+  SC.add(GRP);
+  SC.add(new THREE.HemisphereLight(0xfff3dc, 0x2a1408, 0.9));
+  const dl = new THREE.DirectionalLight(0xffe2a8, 1.1);
+  dl.position.set(120, -200, 300); SC.add(dl);
+  const pl = new THREE.PointLight(0xf4c2cf, 0.6, 1200);
+  pl.position.set(-250, 150, 160); SC.add(pl);
+  MAT = new THREE.MeshPhysicalMaterial({ color: 0x7a4a2c, roughness: 0.32, metalness: 0.1,
+    clearcoat: 1, clearcoatRoughness: 0.15, side: THREE.DoubleSide });
+  drawBed();
+  fitCamera();
+
+  const resize = () => {
+    const w = host.clientWidth, h = host.clientHeight;
+    R3.setSize(w, h);
+    CAM.aspect = w / h; CAM.updateProjectionMatrix();
+    drawWave();
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  host.addEventListener('pointerdown', e => {
+    drag = { x: e.clientX, y: e.clientY, rx: GRP.rotation.x, rz: GRP.rotation.z };
+    host.setPointerCapture(e.pointerId);
+  });
+  host.addEventListener('pointermove', e => {
+    if (!drag) return;
+    GRP.rotation.z = drag.rz + (e.clientX - drag.x) * 0.01;
+    GRP.rotation.x = Math.max(-1.3, Math.min(1.3, drag.rx + (e.clientY - drag.y) * 0.01));
+  });
+  const end = () => drag = null;
+  host.addEventListener('pointerup', end);
+  host.addEventListener('pointercancel', end);
+  host.addEventListener('wheel', e => {
+    e.preventDefault();
+    CAM.position.multiplyScalar(e.deltaY > 0 ? 1.06 : 0.94);
+  }, { passive: false });
+
+  const loop = () => {
+    if (!drag && MESH) GRP.rotation.z += 0.002;
+    R3.render(SC, CAM);
+    requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function showMesh(pos) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  if (MESH) { MESH.geometry.dispose(); MESH.geometry = geo; }
+  else { MESH = new THREE.Mesh(geo, MAT); GRP.add(MESH); }
+}
+
+/* ---------- lingua ---------- */
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.title = L('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    if (el.tagName === 'OPTGROUP') el.label = L(el.dataset.i18n);
+    else el.textContent = L(el.dataset.i18n);
+  });
+  $('#lang').value = LANG;
+  $('#btnPlay').textContent = PLAY ? L('btn_stop') : L('btn_play');
+  updateDrop();
+  renderStatus();
+  refresh();
+}
+$('#lang').onchange = e => { LANG = e.target.value; applyLang(); };
+
+/* ---------- avvio ---------- */
+applyLang();
+initView();
+refresh();
+</script>
+</body>
+</html>
